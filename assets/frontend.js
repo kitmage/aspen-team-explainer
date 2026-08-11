@@ -12,7 +12,11 @@
 		}
 
 		if (!$wrapper.length) {
-			return $();
+			$wrapper = $form.find('.team-fields').first();
+		}
+
+		if (!$wrapper.length) {
+			$wrapper = $form;
 		}
 
 		var $notice = $wrapper.find('.team-seat-context');
@@ -23,33 +27,51 @@
 
 			if ($teamNameField.length) {
 				$teamNameField.after($notice);
+			} else if ($wrapper.hasClass('team-fields')) {
+				$wrapper.prepend($notice);
+			} else if ($wrapper.find('.team-fields').length) {
+				$wrapper.find('.team-fields').first().prepend($notice);
 			} else {
-				$wrapper.find('.team-fields').prepend($notice);
+				$wrapper.prepend($notice);
 			}
 		}
 
 		return $notice;
 	}
 
+	function replacePlaceholders(message, values) {
+		return message.replace(
+			/%(max_seats|product_name|variation_name)(?:\|([^%]*))?%/g,
+			function (match, key, fallback) {
+				var value = values[key];
+
+				if (value === null || typeof value === 'undefined' || value === '') {
+					return typeof fallback === 'string' ? fallback : '';
+				}
+
+				return String(value);
+			}
+		);
+	}
+
 	function render($form, maxSeats, variationName) {
 		var $notice = getNotice($form);
 		var max = parseInt(maxSeats, 10);
 
-		if (!$notice.length || isNaN(max) || max < 1) {
-			$notice.hide().find('p').empty();
+		if (!$notice.length) {
 			return;
 		}
 
-		var replacements = {
-			'%max_seats%': max,
-			'%product_name%': config.productName || '',
-			'%variation_name%': variationName || ''
-		};
-		var message = config.message;
-
-		$.each(replacements, function (placeholder, value) {
-			message = message.split(placeholder).join(String(value));
+		var message = replacePlaceholders(config.message, {
+			max_seats: isNaN(max) || max < 1 ? null : max,
+			product_name: config.productName || null,
+			variation_name: variationName || null
 		});
+
+		if (!message.trim()) {
+			$notice.hide().find('p').empty();
+			return;
+		}
 
 		$notice.find('p').html(message);
 		$notice.show();
@@ -60,7 +82,7 @@
 	});
 
 	$(document).on('reset_data hide_variation', 'form.variations_form', function () {
-		$(wrapperSelector).find('.team-seat-context').hide().find('p').empty();
+		$(this).add($(wrapperSelector)).find('.team-seat-context').hide().find('p').empty();
 	});
 
 	$(function () {

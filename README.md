@@ -8,7 +8,9 @@ A small WordPress plugin for WooCommerce Memberships for Teams. It adds a **Team
 - `%product_name%` — the parent product name.
 - `%variation_name%` — the selected variation name (blank for simple products).
 
-The message supports WordPress's safe post HTML. A message is hidden when the product/variation has no finite positive maximum member count.
+Each placeholder accepts a custom fallback after a pipe. For example, `%max_seats|unlimited%` displays “unlimited” when there is no finite seat maximum, and `%variation_name|Standard%` displays “Standard” on a simple product. Without a fallback, a missing value is replaced with an empty string.
+
+The message supports WordPress's safe post HTML. It is loaded whenever the parent product has a configured message, without relying on version-specific Teams product-detection methods.
 
 ## Installation
 

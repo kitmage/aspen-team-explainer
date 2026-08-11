@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Aspen Team Explainer
  * Description: Adds configurable, seat-aware instructions to WooCommerce Memberships for Teams products.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Aspen
  * Text Domain: aspen-team-explainer
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 final class Aspen_Team_Explainer {
 
 	const META_KEY = '_aspen_team_explainer_message';
-	const VERSION  = '1.0.0';
+	const VERSION  = '1.1.0';
 
 	/** @var self|null */
 	private static $instance = null;
@@ -45,7 +45,7 @@ final class Aspen_Team_Explainer {
 				'id'          => self::META_KEY,
 				'value'       => $value,
 				'label'       => __( 'Team seat instructions', 'aspen-team-explainer' ),
-				'description' => __( 'Shown on the product page for this team product. Available placeholders: %max_seats%, %product_name%, and %variation_name%. Leave blank to show no message.', 'aspen-team-explainer' ),
+				'description' => __( 'Shown on the product page for this team product. Placeholders: %max_seats%, %product_name%, and %variation_name%. Add a custom fallback after a pipe, for example %variation_name|Standard% or %max_seats|unlimited%.', 'aspen-team-explainer' ),
 				'desc_tip'    => true,
 				'class'       => 'short',
 				'wrapper_class' => 'aspen-team-explainer-field',
@@ -89,7 +89,7 @@ final class Aspen_Team_Explainer {
 	}
 
 	public function add_variation_data( $variation_data, $product, $variation ) {
-		if ( ! $this->is_team_product( $product ) ) {
+		if ( '' === trim( (string) $product->get_meta( self::META_KEY, true ) ) ) {
 			return $variation_data;
 		}
 
@@ -106,7 +106,7 @@ final class Aspen_Team_Explainer {
 
 		$product = wc_get_product( get_queried_object_id() );
 
-		if ( ! $product || ! $this->is_team_product( $product ) ) {
+		if ( ! $product ) {
 			return;
 		}
 
@@ -135,16 +135,6 @@ final class Aspen_Team_Explainer {
 		);
 
 		wp_add_inline_script( 'aspen-team-explainer', 'window.aspenTeamExplainer=' . wp_json_encode( $data ) . ';', 'before' );
-	}
-
-	private function is_team_product( $product ) {
-		$class = '\\SkyVerge\\WooCommerce\\Memberships\\Teams\\Product';
-
-		if ( ! class_exists( $class ) ) {
-			return false;
-		}
-
-		return method_exists( $class, 'is_team_product' ) ? (bool) $class::is_team_product( $product ) : null !== $class::get_max_member_count( $product );
 	}
 
 	private function get_max_member_count( $product ) {
